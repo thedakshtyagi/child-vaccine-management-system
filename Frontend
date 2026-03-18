@@ -1,0 +1,21 @@
+/frontend
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CVMS</title>
+</head>
+<body>
+  <h1>Child Vaccine Management System</h1>
+  <form>
+    <input type="email" placeholder="Email"><br>
+    <input type="password" placeholder="Password"><br>
+    <button>Login</button>
+  </form>
+</body>
+</html>
+
+<h2>Dashboard</h2>
+<p>Upcoming Vaccine: Polio - 20 March</p>
+<button>Add Child</button>
+<button>View Records</button>
