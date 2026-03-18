@@ -1,0 +1,11 @@
+const mongoose = require('mongoose');
+
+mongoose.connect('mongodb://localhost:27017/vaccineDB');
+
+const childSchema = {
+    name: String,
+    dob: String,
+    vaccines: Array
+};
+
+const Child = mongoose.model('Child', childSchema);
