@@ -1,21 +1,132 @@
-/frontend
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-<!DOCTYPE html>
-<html>
-<head>
-  <title>CVMS</title>
-</head>
-<body>
-  <h1>Child Vaccine Management System</h1>
-  <form>
-    <input type="email" placeholder="Email"><br>
-    <input type="password" placeholder="Password"><br>
-    <button>Login</button>
-  </form>
-</body>
-</html>
+<div class="container">
+<h2>Login</h2>
 
-<h2>Dashboard</h2>
-<p>Upcoming Vaccine: Polio - 20 March</p>
-<button>Add Child</button>
-<button>View Records</button>
+<form method="post">
+<input name="username" placeholder="Username">
+<input name="password" type="password" placeholder="Password">
+<button>Login</button>
+</form>
+
+<p style="color:red;">{{error}}</p>
+</div>
+
+
+<div>
+<a href="/add_child">Add Child</a>
+<a href="/logout">Logout</a>
+</div>
+
+<table>
+<tr>
+<th>Name</th>
+<th>Age</th>
+<th>Vaccine</th>
+<th>Status</th>
+<th>Reminder</th>
+<th>Action</th>
+</tr>
+
+{% for row in data %}
+<tr>
+<td>{{row[1]}}</td>
+<td>{{row[2]}}</td>
+<td>{{row[3]}}</td>
+
+<td style="color:{% if row[4]=='Completed' %}green{% else %}red{% endif %}">
+{{row[4]}}
+</td>
+
+<td>{{row[5]}}</td>
+
+<td>
+<a href="/toggle/{{row[0]}}">Toggle</a>
+<a href="/delete/{{row[0]}}">Delete</a>
+</td>
+</tr>
+{% endfor %}
+</table>
+
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+<div class="container">
+<h2>Add Child</h2>
+
+<form method="post">
+<input name="name" placeholder="Child Name" required>
+
+<label>Date of Birth:</label>
+<input type="date" name="dob" required>
+
+<label>Select Vaccine:</label>
+<select name="vaccine">
+<option>BCG</option>
+<option>Polio</option>
+<option>DPT</option>
+<option>MMR</option>
+<option>Hepatitis B</option>
+</select>
+
+<button>Add</button>
+</form>
+</div>
+
+
+body {
+    font-family: 'Segoe UI';
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    margin: 0;
+    text-align: center;
+}
+
+.container {
+    background: white;
+    width: 350px;
+    margin: 80px auto;
+    padding: 25px;
+    border-radius: 15px;
+}
+
+input {
+    width: 90%;
+    padding: 10px;
+    margin: 8px;
+}
+
+button {
+    padding: 10px;
+    width: 95%;
+    background: #667eea;
+    color: white;
+    border: none;
+}
+
+a {
+    margin: 10px;
+    padding: 10px;
+    background: #764ba2;
+    color: white;
+    text-decoration: none;
+}
+
+table {
+    width: 90%;
+    margin: 20px auto;
+    background: white;
+    border-collapse: collapse;
+}
+
+th {
+    background: #667eea;
+    color: white;
+}
+
+td, th {
+    padding: 10px;
+}
+
+.green { color: green; }
+.yellow { color: orange; }
+.red { color: red; }
