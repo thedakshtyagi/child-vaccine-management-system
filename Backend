@@ -1,25 +1,133 @@
-const express = require('express');
-const app = express();
+from flask import Flask, render_template, request, redirect, url_for, session
+import sqlite3
+from datetime import datetime
 
-app.use(express.json());
+app = Flask(__name__)
+app.secret_key = "secret123"
 
-let users = [];
-let children = [];
+def get_db():
+    return sqlite3.connect("database.db")
 
-app.post('/register', (req, res) => {
-    users.push(req.body);
-    res.send("User Registered");
-});
+# LOGIN
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    error = ""
+    if request.method == 'POST':
+        u = request.form['username']
+        p = request.form['password']
 
-app.post('/addChild', (req, res) => {
-    children.push(req.body);
-    res.send("Child Added");
-});
+        if u == "admin" and p == "123":
+            session['user'] = "admin"
+            return redirect('/dashboard')
+        elif u == "parent" and p == "123":
+            session['user'] = "parent"
+            return redirect('/dashboard')
+        else:
+            error = "Invalid Login"
 
-app.get('/children', (req, res) => {
-    res.json(children);
-});
+    return render_template("login.html", error=error)
 
-app.listen(3000, () => {
-    console.log("Server running on port 3000");
-});
+# CALCULATE AGE
+def calculate_age(dob):
+    today = datetime.today()
+    dob = datetime.strptime(dob, "%Y-%m-%d")
+    return today.year - dob.year
+
+# DASHBOARD
+@app.route('/dashboard')
+def dashboard():
+    if 'user' not in session:
+        return redirect('/')
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM children")
+    data = cursor.fetchall()
+    conn.close()
+
+    processed = []
+
+    for row in data:
+        id, name, dob, vaccine, status = row
+        age = calculate_age(dob)
+
+        if status == "Completed":
+            reminder = "All vaccines done"
+        else:
+            reminder = "Pending vaccine"
+
+        processed.append((id, name, age, vaccine, status, reminder))
+
+    return render_template("dashboard.html",
+                           data=processed,
+                           role=session['user'])
+
+# ADD CHILD
+@app.route('/add_child', methods=['GET', 'POST'])
+def add_child():
+    if session.get('user') != "admin":
+        return redirect('/dashboard')
+
+    if request.method == 'POST':
+        name = request.form['name']
+        dob = request.form['dob']
+        vaccine = request.form['vaccine']
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO children (name, dob, vaccine, status) VALUES (?, ?, ?, ?)",
+                       (name, dob, vaccine, "Not Completed"))
+        conn.commit()
+        conn.close()
+
+        return redirect('/dashboard')
+
+    return render_template("add_child.html")
+
+# TOGGLE STATUS
+@app.route('/toggle/<int:id>')
+def toggle(id):
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT status FROM children WHERE id=?", (id,))
+    current = cursor.fetchone()[0]
+
+    new_status = "Completed" if current == "Not Completed" else "Not Completed"
+
+    cursor.execute("UPDATE children SET status=? WHERE id=?", (new_status, id))
+    conn.commit()
+    conn.close()
+
+    return redirect('/dashboard')
+
+# DELETE
+@app.route('/delete/<int:id>')
+def delete(id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM children WHERE id=?", (id,))
+    conn.commit()
+    conn.close()
+    return redirect('/dashboard')
+
+# LOGOUT
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/')
+
+# DB
+if __name__ == '__main__':
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS children
+                      (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                       name TEXT,
+                       dob TEXT,
+                       vaccine TEXT,
+                       status TEXT)''')
+    conn.commit()
+    conn.close()
+
+    app.run(debug=True)
